@@ -9,7 +9,7 @@ random.shuffle(members)
 groups = [[m] for m in members]
 
 message = "\n".join([
-    f"**[그룹 {i+1}]**\n" + ", ".join(groups[i])
+    f"[그룹 {i+1}]\n" + ", ".join(groups[i])
     for i in range(len(groups))
 ])
 
