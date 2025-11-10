@@ -23,9 +23,9 @@ payload = {
     "group1": "[그룹 1]",
     "group2": "[그룹 2]",
     "group3": "[그룹 3]",
-    "members1": "\n".join(groups[0]),
-    "members2": "\n".join(groups[1]),
-    "members3": "\n".join(groups[2])
+    "members1": ", ".join(groups[0]),
+    "members2": ", ".join(groups[1]),
+    "members3": ", ".join(groups[2])
 }
 
 response = requests.post(WEBHOOK_URL, json=payload)
