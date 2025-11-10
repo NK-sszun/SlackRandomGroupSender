@@ -10,23 +10,23 @@ members = [
     "박인환", "김준영2"
 ]
 
-# 멤버 랜덤 섞기
+# 무작위 섞기
 random.shuffle(members)
 
-# 3개 그룹으로 균등하게 분할
+# 3개 그룹으로 분할
 group_count = 3
 groups = [members[i::group_count] for i in range(group_count)]
 
-# 메시지 구성
-message = "\n".join([
-    f"[그룹 {i+1}]\n" + ", ".join(groups[i])
-    for i in range(group_count)
-])
-
-payload = {
-    "channel": CHANNEL_ID,
-    "message": message
-}
-
-response = requests.post(WEBHOOK_URL, json=payload)
-print("전송 결과:", response.status_code, response.text)
+# 각 그룹별로 Slack 워크플로우 호출
+for i, group_members in enumerate(groups, start=1):
+    group_name = f"[그룹 {i}]"
+    member_list = ", ".join(group_members)
+    
+    payload = {
+        "channel": CHANNEL_ID,
+        "group": group_name,
+        "members": member_list
+    }
+    
+    response = requests.post(WEBHOOK_URL, json=payload)
+    print(f"{group_name} 전송 결과:", response.status_code, response.text)
