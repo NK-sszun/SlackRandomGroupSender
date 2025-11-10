@@ -10,12 +10,17 @@ members = [
     "박인환", "김준영2"
 ]
 
+# 멤버 랜덤 섞기
 random.shuffle(members)
-groups = [[m] for m in members]
 
+# 3개 그룹으로 균등하게 분할
+group_count = 3
+groups = [members[i::group_count] for i in range(group_count)]
+
+# 메시지 구성
 message = "\n".join([
     f"[그룹 {i+1}]\n" + ", ".join(groups[i])
-    for i in range(len(groups))
+    for i in range(group_count)
 ])
 
 payload = {
