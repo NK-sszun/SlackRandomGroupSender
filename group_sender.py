@@ -3,7 +3,12 @@ import random, requests
 WEBHOOK_URL = "https://hooks.slack.com/triggers/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"
 CHANNEL_ID = "C09QKN9JUR4"
 
-members = ["성지윤", "이송현", "김준영"]
+members = [
+    "김준호2", "이윤호", "홍창모", "김준호", "성지윤",
+    "조성국", "윤정민", "곽경석", "이송현", "최민규",
+    "조경빈", "서정민2", "안승근", "이우성", "황성원",
+    "박인환", "김준영2"
+]
 
 random.shuffle(members)
 groups = [[m] for m in members]
