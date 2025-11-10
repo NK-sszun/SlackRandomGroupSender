@@ -2,7 +2,7 @@ name: Weekly Slack Groups
 
 on:
   schedule:
-    - cron: "42 2 * * MON"  # 한국시간 월요일 오전 11시 50분
+    - cron: "44 2 * * MON"  # 한국시간 월요일 오전 11시 50분
   workflow_dispatch:      
 
 jobs:
