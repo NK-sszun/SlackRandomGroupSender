@@ -2,24 +2,17 @@ name: Weekly Slack Groups
 
 on:
   schedule:
-    - cron: "44 2 * * MON"  # 한국시간 월요일 오전 11시 50분
-  workflow_dispatch:      
+    - cron: "50 2 * * MON"  # 월요일 00:00 UTC == 월요일 09:00 한국시간
+  workflow_dispatch:
 
 jobs:
   send-groups:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run group sender
-        run: python group_sender.py
+      - run: pip install requests
+      - run: python group_sender.py
