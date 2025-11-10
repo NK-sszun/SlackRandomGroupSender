@@ -10,25 +10,22 @@ members = [
     "박인환", "김준영2"
 ]
 
-# 랜덤 섞기
+# 멤버 랜덤 섞기
 random.shuffle(members)
 
-# 3개 그룹 분할
+# 3개 그룹으로 분할
 group_count = 3
 groups = [members[i::group_count] for i in range(group_count)]
 
-# 그룹별 문자열 조합
-group_texts = []
-for i, g in enumerate(groups, start=1):
-    group_texts.append(f"[그룹 {i}]\n" + ", ".join(g))
-
-# 전체 메시지 하나로 합치기
-all_groups_text = "\n".join(group_texts)
-
+# 그룹명 및 각 그룹의 멤버 문자열
 payload = {
     "channel": CHANNEL_ID,
-    "group": "🍚 이번주 점심 식사 그룹은~?",
-    "members": all_groups_text
+    "group1": "[그룹 1]",
+    "group2": "[그룹 2]",
+    "group3": "[그룹 3]",
+    "members1": "\n".join(groups[0]),
+    "members2": "\n".join(groups[1]),
+    "members3": "\n".join(groups[2])
 }
 
 response = requests.post(WEBHOOK_URL, json=payload)
