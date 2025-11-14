@@ -1,7 +1,7 @@
 import random, requests
 
 WEBHOOK_URL = "https://hooks.slack.com/triggers/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"
-CHANNEL_ID = "C09QKN9JUR4"
+CHANNEL_ID = "C09JW19JYQY"
 
 members = [
     "김준호2", "이윤호", "홍창모", "김준호", "성지윤",
