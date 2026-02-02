@@ -12,41 +12,14 @@ members = [
 
 group_count = 3
 
-A = "이송현"
-B = "박인환"
+random.shuffle(members)
 
-# A, B 제외 후 셔플
-others = [m for m in members if m not in (A, B)]
-random.shuffle(others)
-
-# 기본 그룹
 groups = [[] for _ in range(group_count)]
 
-# 라운드 로빈 배치
-for idx, member in enumerate(others):
+# 라운드 로빈 배치 (모든 멤버 동일 취급)
+for idx, member in enumerate(members):
     groups[idx % group_count].append(member)
 
-def get_min_size_group_indices(groups, exclude=None):
-    indices = [
-        i for i in range(len(groups))
-        if exclude is None or i not in exclude
-    ]
-    min_size = min(len(groups[i]) for i in indices)
-    return [i for i in indices if len(groups[i]) == min_size]
-
-# A 삽입: 가장 인원 적은 그룹
-candidates_for_A = get_min_size_group_indices(groups)
-group_for_A = random.choice(candidates_for_A)
-pos_A = random.randint(0, len(groups[group_for_A]))
-groups[group_for_A].insert(pos_A, A)
-
-# B 삽입: A가 없는 그룹 중, 가장 인원 적은 그룹
-candidates_for_B = get_min_size_group_indices(groups, exclude={group_for_A})
-group_for_B = random.choice(candidates_for_B)
-pos_B = random.randint(0, len(groups[group_for_B]))
-groups[group_for_B].insert(pos_B, B)
-
-# 페이로드
 payload = {
     "group1": "[그룹 1]",
     "group2": "[그룹 2]",
