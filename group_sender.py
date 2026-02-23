@@ -9,14 +9,8 @@ SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_CHANNEL_ID = os.environ.get("SLACK_CHANNEL_ID")
 WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 
-# 제외할 멤버 목록을 환경 변수에서 가져오기
-# "홍길동,성춘향" 과 같은 문자열을 ['홍길동', '성춘향'] 리스트로 변환
-excluded_string = os.environ.get("EXCLUDED_MEMBERS", "")
-if excluded_string:
-    # 쉼표(,)로 이름을 나누고, 각 이름의 앞뒤 공백을 제거
-    EXCLUDED_MEMBERS = [name.strip() for name in excluded_string.split(',')]
-else:
-    EXCLUDED_MEMBERS = []
+# 제외할 멤버 목록
+EXCLUDED_MEMBERS = ["곽경석"]
     
 # Slack 클라이언트 초기화
 client = WebClient(token=SLACK_BOT_TOKEN)
@@ -40,14 +34,8 @@ def get_channel_members(channel_id, excluded_list):
                 # 이름에 '[' 기호가 포함되어 있다면, 그 앞부분만 잘라내고 공백을 제거합니다.
                 clean_name = full_name.split('[')[0].strip()
 
-                print(f'슬랙 이름: "{clean_name}" (길이: {len(clean_name)})')
-
                 # '제외할 멤버' 목록에 이름이 없다면 최종 명단에 추가
-                is_excluded = clean_name in excluded_list
-                if is_excluded:
-                    print("  -> [결과] 제외 명단과 일치! (제외 처리)")
-                
-                if not is_excluded:
+                if clean_name not in excluded_list:
                     members.append(clean_name)
         
         return members
