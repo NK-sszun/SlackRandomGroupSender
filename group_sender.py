@@ -1,33 +1,65 @@
+import os
 import random
 import requests
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
-WEBHOOK_URL = "https://hooks.slack.com/triggers/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"
+# GitHub Secrets 또는 환경 변수에서 값 가져오기
+SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
+SLACK_CHANNEL_ID = os.environ.get("SLACK_CHANNEL_ID")
+WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 
-members = [
-    "김준호2", "이윤호", "홍창모", "성지윤",
-    "조성국", "윤정민", "이송현", "최민규",
-    "조경빈", "서정민2", "이우성", "황성원",
-    "박인환", "김준영2", "안승근", "신동헌"
-]
+# Slack 클라이언트 초기화
+client = WebClient(token=SLACK_BOT_TOKEN)
 
-group_count = 3
+def get_channel_members(channel_id):
+    """지정된 채널의 모든 멤버 이름을 가져옵니다."""
+    try:
+        # conversations.members API를 호출하여 멤버 ID 목록 가져오기
+        result = client.conversations_members(channel=channel_id)
+        member_ids = result["members"]
+        
+        members = []
+        for member_id in member_ids:
+            # users.info API를 호출하여 각 멤버의 정보 가져오기
+            user_info = client.users_info(user=member_id)
+            if not user_info["user"]["is_bot"]: # 봇은 제외
+                # 'real_name' 또는 'name' 필드 사용
+                members.append(user_info["user"].get("real_name") or user_info["user"].get("name"))
+        
+        return members
+        
+    except SlackApiError as e:
+        print(f"Error fetching members: {e.response['error']}")
+        return []
 
-random.shuffle(members)
+# --- 기존 로직 ---
 
-groups = [[] for _ in range(group_count)]
+# 채널 멤버 자동으로 가져오기
+members = get_channel_members(SLACK_CHANNEL_ID)
 
-# 라운드 로빈 배치 (모든 멤버 동일 취급)
-for idx, member in enumerate(members):
-    groups[idx % group_count].append(member)
+if not members:
+    print("멤버를 가져오지 못했습니다. 스크립트를 종료합니다.")
+else:
+    print(f"총 {len(members)}명의 멤버를 찾았습니다: {', '.join(members)}")
+    group_count = 3
+    random.shuffle(members)
 
-payload = {
-    "group1": "[그룹 1]",
-    "group2": "[그룹 2]",
-    "group3": "[그룹 3]",
-    "members1": ", ".join(groups[0]),
-    "members2": ", ".join(groups[1]),
-    "members3": ", ".join(groups[2])
-}
+    groups = [[] for _ in range(group_count)]
 
-response = requests.post(WEBHOOK_URL, json=payload)
-print("전송 결과:", response.status_code, response.text)
+    # 라운드 로빈 배치
+    for idx, member in enumerate(members):
+        groups[idx % group_count].append(member)
+
+    payload = {
+        "group1": "[그룹 1]",
+        "group2": "[그룹 2]",
+        "group3": "[그룹 3]",
+        "members1": ", ".join(groups[0]) if groups[0] else "멤버 없음",
+        "members2": ", ".join(groups[1]) if groups[1] else "멤버 없음",
+        "members3": ", ".join(groups[2]) if groups[2] else "멤버 없음"
+    }
+
+    response = requests.post(WEBHOOK_URL, json=payload)
+    print("전송 결과:", response.status_code, response.text)
+
