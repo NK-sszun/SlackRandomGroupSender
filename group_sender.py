@@ -40,8 +40,14 @@ def get_channel_members(channel_id, excluded_list):
                 # 이름에 '[' 기호가 포함되어 있다면, 그 앞부분만 잘라내고 공백을 제거합니다.
                 clean_name = full_name.split('[')[0].strip()
 
+                print(f'슬랙 이름: "{clean_name}" (길이: {len(clean_name)})')
+
                 # '제외할 멤버' 목록에 이름이 없다면 최종 명단에 추가
-                if clean_name not in excluded_list:
+                is_excluded = clean_name in excluded_list
+                if is_excluded:
+                    print("  -> [결과] 제외 명단과 일치! (제외 처리)")
+                
+                if not is_excluded:
                     members.append(clean_name)
         
         return members
