@@ -21,7 +21,7 @@ else:
 # Slack 클라이언트 초기화
 client = WebClient(token=SLACK_BOT_TOKEN)
 
-def get_channel_members(channel_id):
+def get_channel_members(channel_id, excluded_list):
     """지정된 채널의 모든 멤버 이름을 가져옵니다."""
     try:
         # conversations.members API를 호출하여 멤버 ID 목록 가져오기
@@ -50,15 +50,16 @@ def get_channel_members(channel_id):
         print(f"Error fetching members: {e.response['error']}")
         return []
 
-# --- 기존 로직 ---
+# --- 메인 로직 ---
 
 # 채널 멤버 자동으로 가져오기
-members = get_channel_members(SLACK_CHANNEL_ID)
+print(f"제외할 멤버: {', '.join(EXCLUDED_MEMBERS) if EXCLUDED_MEMBERS else '없음'}")
+members = get_channel_members(SLACK_CHANNEL_ID, EXCLUDED_MEMBERS)
 
 if not members:
-    print("멤버를 가져오지 못했습니다. 스크립트를 종료합니다.")
+    print("멤버를 가져오지 못했거나, 모든 멤버가 제외되었습니다. 스크립트를 종료합니다.")
 else:
-    print(f"총 {len(members)}명의 멤버를 찾았습니다: {', '.join(members)}")
+    print(f"그룹 생성 대상 멤버 ({len(members)}명): {', '.join(members)}")
     group_count = 3
     random.shuffle(members)
 
@@ -79,4 +80,3 @@ else:
 
     response = requests.post(WEBHOOK_URL, json=payload)
     print("전송 결과:", response.status_code, response.text)
-
