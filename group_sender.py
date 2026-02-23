@@ -24,8 +24,13 @@ def get_channel_members(channel_id):
             # users.info API를 호출하여 각 멤버의 정보 가져오기
             user_info = client.users_info(user=member_id)
             if not user_info["user"]["is_bot"]: # 봇은 제외
-                # 'real_name' 또는 'name' 필드 사용
-                members.append(user_info["user"].get("real_name") or user_info["user"].get("name"))
+                # 'real_name' 또는 'name' 필드에서 이름을 가져옵니다.
+                full_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+                
+                # 이름에 '[' 기호가 포함되어 있다면, 그 앞부분만 잘라내고 공백을 제거합니다.
+                clean_name = full_name.split('[')[0].strip()
+                
+                members.append(clean_name)
         
         return members
         
