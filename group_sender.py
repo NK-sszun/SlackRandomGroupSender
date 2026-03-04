@@ -10,7 +10,7 @@ SLACK_CHANNEL_ID = os.environ.get("SLACK_CHANNEL_ID")
 WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 
 # 제외할 멤버 목록
-EXCLUDED_MEMBERS = ["곽경석"]
+EXCLUDED_MEMBERS = ["곽경석","이상령"]
     
 # Slack 클라이언트 초기화
 client = WebClient(token=SLACK_BOT_TOKEN)
