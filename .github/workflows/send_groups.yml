@@ -18,4 +18,5 @@ jobs:
       - run: python group_sender.py
         env: # 환경 변수
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLACK_MEMBER_CHANNEL_ID: ${{ secrets.SLACK_MEMBER_CHANNEL_ID }}
+          SLACK_TARGET_CHANNEL_ID: ${{ secrets.SLACK_TARGET_CHANNEL_ID }}
