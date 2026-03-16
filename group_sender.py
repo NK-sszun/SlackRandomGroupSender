@@ -109,7 +109,7 @@ else:
         groups[idx % group_count].append(member)
 
     # 기존 pinned 메시지 제거
-    unpin_existing_messages(SLACK_CHANNEL_ID)
+    unpin_previous_group_message(SLACK_CHANNEL_ID)
 
     # 새 메시지 전송 + pin
     send_group_message(SLACK_CHANNEL_ID, groups)
