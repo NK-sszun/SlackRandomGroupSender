@@ -59,7 +59,7 @@ def unpin_previous_group_message(channel_id):
 
 
 def send_group_message(channel_id, groups):
-text = f"""
+    text = f"""
 [WEEKLY_GROUP]
 
 *이번 주 그룹*
