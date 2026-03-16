@@ -1,115 +1,176 @@
 import os
 import random
+import math
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
-SLACK_CHANNEL_ID = os.environ.get("SLACK_CHANNEL_ID")
+
+SLACK_MEMBER_CHANNEL_ID = os.environ.get("SLACK_MEMBER_CHANNEL_ID")
+SLACK_TARGET_CHANNEL_ID = os.environ.get("SLACK_TARGET_CHANNEL_ID")
 
 EXCLUDED_MEMBERS = ["곽경석"]
+
+MAX_GROUP_SIZE = 6
 
 client = WebClient(token=SLACK_BOT_TOKEN)
 
 
-def get_channel_members(channel_id, excluded_list):
+def get_user_cache():
+    """users.list로 전체 유저 캐시 생성"""
+    cache = {}
+
+    try:
+        result = client.users_list()
+
+        for user in result["members"]:
+
+            if user["is_bot"] or user["deleted"]:
+                continue
+
+            full_name = user.get("real_name") or user.get("name")
+
+            clean_name = full_name.split('[')[0].strip()
+
+            cache[user["id"]] = clean_name
+
+    except SlackApiError as e:
+        print(f"users.list error: {e.response['error']}")
+
+    return cache
+
+
+def get_channel_members(channel_id, excluded_list, user_cache):
     """채널 멤버 이름 가져오기"""
+
+    members = []
+
     try:
         result = client.conversations_members(channel=channel_id)
-        member_ids = result["members"]
 
-        members = []
-        for member_id in member_ids:
-            user_info = client.users_info(user=member_id)
+        for member_id in result["members"]:
 
-            if not user_info["user"]["is_bot"]:
-                full_name = user_info["user"].get("real_name") or user_info["user"].get("name")
-                clean_name = full_name.split('[')[0].strip()
+            if member_id not in user_cache:
+                continue
 
-                if clean_name not in excluded_list:
-                    members.append(clean_name)
+            name = user_cache[member_id]
 
-        return members
+            if name not in excluded_list:
+                members.append(name)
 
     except SlackApiError as e:
         print(f"Error fetching members: {e.response['error']}")
-        return []
+
+    return members
+
+
+def split_groups(members):
+    """최대 6명 기준 균등 그룹 분배"""
+
+    random.shuffle(members)
+
+    n = len(members)
+
+    group_count = math.ceil(n / MAX_GROUP_SIZE)
+
+    base_size = n // group_count
+    remainder = n % group_count
+
+    groups = []
+    idx = 0
+
+    for i in range(group_count):
+
+        size = base_size + (1 if i < remainder else 0)
+
+        groups.append(members[idx:idx + size])
+
+        idx += size
+
+    return groups
 
 
 def unpin_previous_group_message(channel_id):
-    """내가 보낸 이전 그룹 메시지만 unpin"""
+    """이전 그룹 메시지만 unpin"""
+
     try:
         result = client.pins_list(channel=channel_id)
-        items = result.get("items", [])
 
-        for item in items:
-            if "message" in item:
-                msg = item["message"]
-                text = msg.get("text", "")
-                ts = msg["ts"]
+        for item in result["items"]:
 
-                if "[WEEKLY_GROUP]" in text:
-                    client.pins_remove(
-                        channel=channel_id,
-                        timestamp=ts
-                    )
-                    print(f"Removed old group pin: {ts}")
+            if "message" not in item:
+                continue
+
+            msg = item["message"]
+
+            text = msg.get("text", "")
+
+            if "[WEEKLY_GROUP]" in text:
+
+                client.pins_remove(
+                    channel=channel_id,
+                    timestamp=msg["ts"]
+                )
+
+                print(f"Removed old group pin: {msg['ts']}")
 
     except SlackApiError as e:
         print(f"Error removing pins: {e.response['error']}")
 
 
 def send_group_message(channel_id, groups):
-    text = f"""
-[WEEKLY_GROUP]
 
-*이번 주 그룹*
+    text = "[WEEKLY_GROUP]\n\n*이번 주 그룹*\n\n"
 
-*그룹 1*
-{", ".join(groups[0]) if groups[0] else "멤버 없음"}
+    for idx, group in enumerate(groups, start=1):
 
-*그룹 2*
-{", ".join(groups[1]) if groups[1] else "멤버 없음"}
+        text += f"*그룹 {idx}*\n"
+        text += ", ".join(group) if group else "멤버 없음"
+        text += "\n\n"
 
-*그룹 3*
-{", ".join(groups[2]) if groups[2] else "멤버 없음"}
-"""
+    try:
 
-    result = client.chat_postMessage(
-        channel=channel_id,
-        text=text
-    )
+        result = client.chat_postMessage(
+            channel=channel_id,
+            text=text
+        )
 
-    ts = result["ts"]
+        ts = result["ts"]
 
-    client.pins_add(
-        channel=channel_id,
-        timestamp=ts
-    )
+        client.pins_add(
+            channel=channel_id,
+            timestamp=ts
+        )
 
-    print(f"Message sent and pinned: {ts}")
+        print(f"Message sent and pinned: {ts}")
+
+    except SlackApiError as e:
+
+        print(f"Error sending message: {e.response['error']}")
 
 
-# --- 메인 로직 ---
+# ---------------- MAIN ----------------
 
 print(f"제외할 멤버: {', '.join(EXCLUDED_MEMBERS) if EXCLUDED_MEMBERS else '없음'}")
 
-members = get_channel_members(SLACK_CHANNEL_ID, EXCLUDED_MEMBERS)
+user_cache = get_user_cache()
+
+members = get_channel_members(
+    SLACK_MEMBER_CHANNEL_ID,
+    EXCLUDED_MEMBERS,
+    user_cache
+)
 
 if not members:
+
     print("멤버를 가져오지 못했습니다.")
+
 else:
+
     print(f"그룹 생성 대상 멤버 ({len(members)}명): {', '.join(members)}")
 
-    group_count = 3
-    random.shuffle(members)
+    groups = split_groups(members)
 
-    groups = [[] for _ in range(group_count)]
+    unpin_previous_group_message(SLACK_TARGET_CHANNEL_ID)
 
-    for idx, member in enumerate(members):
-        groups[idx % group_count].append(member)
-
-    # 기존 pinned 메시지 제거
-    unpin_previous_group_message(SLACK_CHANNEL_ID)
-
-    # 새 메시지 전송 + pin
-    send_group_message(SLACK_CHANNEL_ID, groups)
+    send_group_message(SLACK_TARGET_CHANNEL_ID, groups)
