@@ -35,31 +35,33 @@ def get_channel_members(channel_id, excluded_list):
         return []
 
 
-def unpin_existing_messages(channel_id):
-    """현재 pinned 메시지 모두 해제"""
+def unpin_previous_group_message(channel_id):
+    """내가 보낸 이전 그룹 메시지만 unpin"""
     try:
         result = client.pins_list(channel=channel_id)
-
         items = result.get("items", [])
 
         for item in items:
             if "message" in item:
-                ts = item["message"]["ts"]
+                msg = item["message"]
+                text = msg.get("text", "")
+                ts = msg["ts"]
 
-                client.pins_remove(
-                    channel=channel_id,
-                    timestamp=ts
-                )
-
-                print(f"Unpinned message {ts}")
+                if "[WEEKLY_GROUP]" in text:
+                    client.pins_remove(
+                        channel=channel_id,
+                        timestamp=ts
+                    )
+                    print(f"Removed old group pin: {ts}")
 
     except SlackApiError as e:
         print(f"Error removing pins: {e.response['error']}")
 
 
 def send_group_message(channel_id, groups):
-    """메시지 전송 + pin"""
-    text = f"""
+text = f"""
+[WEEKLY_GROUP]
+
 *이번 주 그룹*
 
 *그룹 1*
