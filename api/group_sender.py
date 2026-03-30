@@ -164,13 +164,30 @@ def parse_groups_from_message(msg):
 
     return groups
 
+def remove_members_from_groups(groups, removed_members):
+    new_groups = []
 
-def add_new_members_with_limit(groups, new_members):
+    for group in groups:
+        filtered = [m for m in group if m not in removed_members]
+        if filtered:
+            new_groups.append(filtered)
+
+    return new_groups
+
+# 최소인원 그룹 중 랜덤 배정
+def add_new_members_balanced(groups, new_members):
     for member in new_members:
-        available = [g for g in groups if len(g) < MAX_GROUP_SIZE]
+        # 그룹을 인원 기준으로 정렬
+        groups.sort(key=lambda g: len(g))
 
-        if available:
-            target = random.choice(available)
+        # 항상 groups[0] = 최소인원 그룹
+        min_size = len(groups[0])
+
+        # 후보 그룹 선택 : 최소 인원 그룹 and 최대 인원 안 넘은 그룹
+        candidates = [g for g in groups if len(g) == min_size and len(g) < MAX_GROUP_SIZE]
+
+        if candidates:
+            target = random.choice(candidates)
         else:
             target = random.choice(groups)
 
@@ -190,7 +207,7 @@ def update_group_message(channel_id, ts, groups):
     client.chat_update(channel=channel_id, ts=ts, text=text)
 
 
-def notify_group_update(channel_id, new_members):
+def notify_group_update(channel_id):
     text = "랜덤 점심 그룹을 갱신했습니다.\n"
     text += "채널의 고정 메시지를 확인해주세요.\n\n"
 
@@ -224,12 +241,20 @@ def handle_slash_command():
         prev_members.update(g)
 
     current_members = set(members)
+
+    removed_members = prev_members - current_members
     new_members = current_members - prev_members
 
-    if not new_members:
-        return "신규 멤버가 없습니다."
+    # 삭제 먼저
+    if removed_members:
+        groups = remove_members_from_groups(groups, removed_members)
 
-    groups = add_new_members_with_limit(groups, new_members)
+    # 신규 멤버 추가 (최소인원 그룹부터 균등 배치)
+    if new_members:
+        groups = add_new_members_balanced(groups, new_members)
+
+    if not new_members and not removed_members:
+        return "변경된 멤버가 없습니다."
 
     update_group_message(
         SLACK_TARGET_CHANNEL_ID,
@@ -237,12 +262,10 @@ def handle_slash_command():
         groups
     )
 
-    notify_group_update(
-        SLACK_TARGET_CHANNEL_ID,
-        new_members
-    )
+    if new_members or removed_members:
+        notify_group_update(SLACK_TARGET_CHANNEL_ID)
 
-    return f"그룹을 갱신했습니다. 신규 멤버: {', '.join(new_members)}"
+    return f"그룹을 갱신했습니다."
 
 # ---------------- FLASK ENTRY ----------------
 
