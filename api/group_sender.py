@@ -271,9 +271,9 @@ def slack_handler():
             "text": "에러 발생"
         })
 
-# ---------------- MONDAY RESET ----------------
+# ---------------- RESET GROUP ----------------
 
-def monday_reset():
+def reset_random_group():
     user_cache = get_user_cache()
 
     members = get_channel_members(
@@ -292,4 +292,7 @@ def monday_reset():
 
     send_group_message(SLACK_TARGET_CHANNEL_ID, groups)
 
-    print("월요일 그룹 재생성 완료")
+    print("점심 그룹 재생성 완료")
+    
+if __name__ == "__main__":
+    reset_random_group()
