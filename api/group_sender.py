@@ -191,10 +191,8 @@ def update_group_message(channel_id, ts, groups):
 
 
 def notify_group_update(channel_id, new_members):
-    text = "새로운 멤버가 감지되었습니다.\n"
-    text += "랜덤 점심 그룹을 갱신했습니다.\n"
+    text = "랜덤 점심 그룹을 갱신했습니다.\n"
     text += "채널의 고정 메시지를 확인해주세요.\n\n"
-    text += "신규 멤버: " + ", ".join(new_members)
 
     client.chat_postMessage(channel=channel_id, text=text)
 
@@ -253,7 +251,7 @@ def slack_handler():
     try:
         command = request.form.get("command")
 
-        if command == "/갱신":
+        if command == "/그룹갱신":
             result_text = handle_slash_command()
 
             return jsonify({
