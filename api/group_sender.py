@@ -276,21 +276,20 @@ def handler(request):
             result_text = handle_slash_command()
 
             return {
-                "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
-                "body": f'{{"response_type":"ephemeral","text":"{result_text}"}}'
+                "response_type": "ephemeral",
+                "text": result_text
             }
 
         return {
-            "statusCode": 200,
-            "body": "알 수 없는 명령어"
+            "response_type": "ephemeral",
+            "text": "알 수 없는 명령어"
         }
 
     except Exception as e:
         print("ERROR:", str(e))
         return {
-            "statusCode": 200,
-            "body": "에러 발생"
+            "response_type": "ephemeral",
+            "text": "에러 발생"
         }
 
 # ---------------- MONDAY RESET (별도 실행용) ----------------
