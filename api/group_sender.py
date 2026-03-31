@@ -87,7 +87,7 @@ def send_group_message(channel_id, groups):
 
     for idx, group in enumerate(groups, start=1):
         text += f"*그룹 {idx}*\n"
-        text += ", ".join(group) if group else "멤버 없음"
+        text += ", ".join(group)
         text += "\n\n"
 
     result = client.chat_postMessage(channel=channel_id, text=text)
@@ -150,14 +150,22 @@ def parse_groups_from_message(msg):
     for line in lines:
         line = line.strip()
 
+        if not line:
+            continue
+
         if line.startswith("*그룹"):
             if current_group:
                 groups.append(current_group)
                 current_group = []
+            continue
 
-        elif "," in line:
-            names = [name.strip() for name in line.split(",")]
-            current_group.extend(names)
+        # 헤더 제거
+        if line in ("[WEEKLY_GROUP]", "*이번 주 그룹*"):
+            continue
+
+        # 핵심: 쉼표 없어도 처리
+        names = [name.strip() for name in line.split(",") if name.strip()]
+        current_group.extend(names)
 
     if current_group:
         groups.append(current_group)
@@ -174,22 +182,19 @@ def remove_members_from_groups(groups, removed_members):
 
     return new_groups
 
-# 최소인원 그룹 중 랜덤 배정
 def add_new_members_balanced(groups, new_members):
+    if not groups:
+        return [list(new_members)]
+
     for member in new_members:
-        # 그룹을 인원 기준으로 정렬
-        groups.sort(key=lambda g: len(g))
+        # 최소 인원 계산
+        min_size = min(len(g) for g in groups)
 
-        # 항상 groups[0] = 최소인원 그룹
-        min_size = len(groups[0])
+        # 최소 인원 그룹들 추출
+        candidates = [g for g in groups if len(g) == min_size]
 
-        # 후보 그룹 선택 : 최소 인원 그룹 and 최대 인원 안 넘은 그룹
-        candidates = [g for g in groups if len(g) == min_size and len(g) < MAX_GROUP_SIZE]
-
-        if candidates:
-            target = random.choice(candidates)
-        else:
-            target = random.choice(groups)
+        # 랜덤 선택
+        target = random.choice(candidates)
 
         target.append(member)
 
@@ -248,6 +253,9 @@ def handle_slash_command():
     # 삭제 먼저
     if removed_members:
         groups = remove_members_from_groups(groups, removed_members)
+
+    if not groups and current_members:
+        groups = [list(current_members)]
 
     # 신규 멤버 추가 (최소인원 그룹부터 균등 배치)
     if new_members:
